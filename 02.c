@@ -14,7 +14,7 @@
  *
  * IC: u(0,0.5<=x<=1) = 2, u(0,elsewhere) = 1
  *
- * BC: u(n,0)=u(n,2)=0
+ * BC: u(n,0)=u(n,2)=1
  */
 
 int main(void)
@@ -35,26 +35,25 @@ int main(void)
 	// IC
 	for (i = 0; i < nx; i++) {
 		double x = dx * i;
-		*mat_at(u0, i, 0) = x >= 0.5 && x <= 1.0 ? 2 : 1;
+		*mat_at(u0, i, 0) = x >= 0.5 && x <= 1.0 ? 2.0 : 1.0;
 	}
-	mat_print(u0, 0);
+	mat_print(u0, "u", 0);
 
 	for (n = 1; n <= nt; n++) {
 		// BC
 		*mat_at(u1, 0, 0) = 1.0;
-		*mat_at(u1, nx - 1, 0) = 1.0;
+		*mat_at(u1, nx-1, 0) = 1.0;
 
 		// Equation
 		for (i = 1; i < nx - 1; i++) {
 			double udtdx = *mat_at(u0, i, 0) * dt / dx;
 			if (udtdx > 1.0) {
-				WARN("CFL=%f > 1\n", udtdx);
+				WARNF("CFL=%f > 1\n", udtdx);
 			}
 			*mat_at(u1, i, 0) = *mat_at(u0, i, 0) - udtdx *
-					(*mat_at(u0, i, 0) -
-					 *mat_at(u0, i - 1, 0));
+				(*mat_at(u0, i, 0) - *mat_at(u0, i-1, 0));
 		}
-		mat_print(u1, n);
+		mat_print(u1, "u", n);
 
 		SWAP(struct mat, u0, u1);
 	}

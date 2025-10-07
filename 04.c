@@ -5,10 +5,6 @@
 
 #include <math.h>
 
-#ifndef M_PI
-#define M_PI 3.141592653589793
-#endif
-
 #include "utils.h"
 
 /*
@@ -62,26 +58,25 @@ int main(void)
 		double x = dx * i;
 		*mat_at(u0, i, 0) = sol(0, x, nu);
 	}
-	mat_print(u0, 0);
+	mat_print(u0, "u", 0);
 
 	for (n = 1; n <= nt; n++) {
 		// Equation
 		for (i = 0; i < nx; i++) {
 			double udtdx = *mat_at(u0, i, 0) * dt / dx;
 			if (udtdx > 1.0) {
-				WARN("CFL=%f > 1\n", udtdx);
+				WARNF("CFL=%f > 1\n", udtdx);
 			}
 			int im = i > 0 ? i - 1 : nx - 1;
 			int ip = i < nx - 1 ? i + 1 : 0;
 			*mat_at(u1, i, 0) = *mat_at(u0, i, 0) - udtdx *
-					(*mat_at(u0, i, 0) -
-					 *mat_at(u0, im, 0)) +
-					nudtdx2 *
-					(*mat_at(u0, ip, 0) -
-					 *mat_at(u0, i, 0) * 2 +
-					 *mat_at(u0, im, 0));
+				(*mat_at(u0, i, 0) -
+				 *mat_at(u0, im, 0)) + nudtdx2 *
+				(*mat_at(u0, ip, 0) -
+				 *mat_at(u0, i, 0) * 2 +
+				 *mat_at(u0, im, 0));
 		}
-		mat_print(u1, n);
+		mat_print(u1, "u", n);
 
 		SWAP(struct mat, u0, u1);
 
@@ -89,7 +84,7 @@ int main(void)
 		for (i = 0; i < nx; i++) {
 			*mat_at(u1, i, 0) = sol(n * dt, i * dx, nu);
 		}
-		mat_print(u1, -n);
+		mat_print(u1, "ua", n);
 	}
 
 	mat_destroy(&u0);

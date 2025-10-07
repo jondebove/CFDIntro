@@ -15,7 +15,7 @@
  *
  * IC: u(0,0.5<=x,y<=1) = 2, u(0,elsewhere) = 1
  *
- * BC: u(n,0)=u(n,2) = 1
+ * BC: u(n,0)=u(n,2)=1
  */
 
 int main(void)
@@ -46,7 +46,7 @@ int main(void)
 				y >= 0.5 && y <= 1.0 ?  2.0 : 1.0;
 		}
 	}
-	mat_print(u0, 0);
+	mat_print(u0, "u", 0);
 
 	for (n = 1; n <= nt; n++) {
 		// BC
@@ -63,17 +63,17 @@ int main(void)
 		for (i = 1; i < nx - 1; i++) {
 			for (j = 1; j < ny - 1; j++) {
 				*mat_at(u1, i, j) = *mat_at(u0, i, j)
-						+ nu*dt/dx *
-						(*mat_at(u0, i+1, j) -
-						 *mat_at(u0, i, j)*2 +
-						 *mat_at(u0, i-1, j))
-						+ nu*dt/dy *
-						(*mat_at(u0, i, j+1) -
-						 *mat_at(u0, i, j)*2 +
-						 *mat_at(u0, i, j-1));
+					+ nu*dt/dx *
+					(*mat_at(u0, i+1, j) -
+					 *mat_at(u0, i, j)*2 +
+					 *mat_at(u0, i-1, j))
+					+ nu*dt/dy *
+					(*mat_at(u0, i, j+1) -
+					 *mat_at(u0, i, j)*2 +
+					 *mat_at(u0, i, j-1));
 			}
 		}
-		mat_print(u1, n);
+		mat_print(u1, "u", n);
 
 		SWAP(struct mat, u0, u1);
 	}

@@ -21,7 +21,7 @@
  *
  * IC: u(0,0.5<=x,y<=1) = 2, u(0,elsewhere) = 1
  *
- * BC: u(n,0)=u(n,2) = 1
+ * BC: u(n,0)=u(n,2)=1
  */
 
 int main(void)
@@ -56,8 +56,8 @@ int main(void)
 				y >= 0.5 && y <= 1.0 ?  2.0 : 1.0;
 		}
 	}
-	mat_print(u0, 0);
-	mat_print(v0, -1);
+	mat_print(u0, "u", 0);
+	mat_print(v0, "v", 0);
 
 	for (n = 1; n <= nt; n++) {
 		// BC
@@ -80,43 +80,43 @@ int main(void)
 				double cdtdx = *mat_at(u0, i, j) * dt / dx;
 				double cdtdy = *mat_at(v0, i, j) * dt / dy;
 				if (cdtdx > 1.0 || cdtdy > 1) {
-					WARN("CFLx=%f CFLy=%f\n", cdtdx, cdtdy);
+					WARNF("CFLx=%f CFLy=%f\n", cdtdx, cdtdy);
 				}
 
 				*mat_at(u1, i, j) = *mat_at(u0, i, j)
-						- cdtdx *
-						(*mat_at(u0, i, j) -
-						 *mat_at(u0, i-1, j))
-						- cdtdy *
-						(*mat_at(u0, i, j) -
-						 *mat_at(u0, i, j-1))
-						+ nu*dt/dx *
-						(*mat_at(u0, i+1, j) -
-						 *mat_at(u0, i, j)*2 +
-						 *mat_at(u0, i-1, j))
-						+ nu*dt/dy *
-						(*mat_at(u0, i, j+1) -
-						 *mat_at(u0, i, j)*2 +
-						 *mat_at(u0, i, j-1));
+					- cdtdx *
+					(*mat_at(u0, i, j) -
+					 *mat_at(u0, i-1, j))
+					- cdtdy *
+					(*mat_at(u0, i, j) -
+					 *mat_at(u0, i, j-1))
+					+ nu*dt/dx *
+					(*mat_at(u0, i+1, j) -
+					 *mat_at(u0, i, j)*2 +
+					 *mat_at(u0, i-1, j))
+					+ nu*dt/dy *
+					(*mat_at(u0, i, j+1) -
+					 *mat_at(u0, i, j)*2 +
+					 *mat_at(u0, i, j-1));
 				*mat_at(v1, i, j) = *mat_at(v0, i, j)
-						- cdtdx *
-						(*mat_at(v0, i, j) -
-						 *mat_at(v0, i-1, j))
-						- cdtdy *
-						(*mat_at(v0, i, j) -
-						 *mat_at(v0, i, j-1))
-						+ nu*dt/dx *
-						(*mat_at(v0, i+1, j) -
-						 *mat_at(v0, i, j)*2 +
-						 *mat_at(v0, i-1, j))
-						+ nu*dt/dy *
-						(*mat_at(v0, i, j+1) -
-						 *mat_at(v0, i, j)*2 +
-						 *mat_at(v0, i, j-1));
+					- cdtdx *
+					(*mat_at(v0, i, j) -
+					 *mat_at(v0, i-1, j))
+					- cdtdy *
+					(*mat_at(v0, i, j) -
+					 *mat_at(v0, i, j-1))
+					+ nu*dt/dx *
+					(*mat_at(v0, i+1, j) -
+					 *mat_at(v0, i, j)*2 +
+					 *mat_at(v0, i-1, j))
+					+ nu*dt/dy *
+					(*mat_at(v0, i, j+1) -
+					 *mat_at(v0, i, j)*2 +
+					 *mat_at(v0, i, j-1));
 			}
 		}
-		mat_print(u1, n);
-		mat_print(v1, -n-1);
+		mat_print(u1, "u", n);
+		mat_print(v1, "v", n);
 
 		SWAP(struct mat, u0, u1);
 		SWAP(struct mat, v0, v1);

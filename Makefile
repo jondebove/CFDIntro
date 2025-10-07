@@ -7,14 +7,20 @@ BINS = 01 02 03 04 05 06 07 08
 
 all: $(BINS)
 
-$(BINS): utils.h
+$(BINS): utils.o
 
-.PHONY: distclean
+.PHONY: clean distclean
 
-distclean:
+clean:
+	-rm -f *.o
+
+distclean: clean
 	-rm -f $(BINS)
 
-.SUFFIXES: .c
+.SUFFIXES: .c .o
 
 .c:
-	$(CC) $(CFLAGS) -o $@ $< -lm
+	$(CC) $(CFLAGS) -o $@ $< utils.o -lm
+
+.c.o:
+	$(CC) $(CFLAGS) -c $<
