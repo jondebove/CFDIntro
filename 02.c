@@ -24,7 +24,6 @@ int main(void)
 	double dx = 2.0 / (nx - 1);
 	double dt = 0.01;
 
-	int err = EXIT_SUCCESS;
 	int n = 0;
 	int i = 0;
 
@@ -61,5 +60,5 @@ int main(void)
 	mat_destroy(&u0);
 	mat_destroy(&u1);
 
-	return err;
+	return 0;
 }

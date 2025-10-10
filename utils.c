@@ -3,6 +3,9 @@
  * SPDX-License-Identifier: BSD-2-Clause
  */
 
+#include <stdio.h>
+#include <stdlib.h>
+
 #include "utils.h"
 
 struct mat *mat_create(struct mat *m, int nrow, int ncol)

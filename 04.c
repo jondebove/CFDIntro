@@ -45,7 +45,6 @@ int main(void)
 
 	double nudtdx2 = nu * dt / (dx * dx);
 
-	int err = EXIT_SUCCESS;
 	int n = 0;
 	int i = 0;
 
@@ -90,5 +89,5 @@ int main(void)
 	mat_destroy(&u0);
 	mat_destroy(&u1);
 
-	return err;
+	return 0;
 }

@@ -8,10 +8,9 @@
 
 #include <assert.h>
 #include <stdio.h>
-#include <stdlib.h>
 
 #ifndef M_PI
-#define M_PI 3.141592653589793
+#define M_PI 3.14159265358979323844
 #endif
 
 #define WARNF(...) fprintf(stderr, __VA_ARGS__)

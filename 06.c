@@ -29,7 +29,6 @@ int main(void)
 	double dy = 2.0 / (ny - 1);
 	double dt = 0.01;
 
-	int err = EXIT_SUCCESS;
 	int n = 0;
 	int i = 0;
 	int j = 0;
@@ -106,5 +105,5 @@ int main(void)
 	mat_destroy(&v0);
 	mat_destroy(&v1);
 
-	return err;
+	return 0;
 }
