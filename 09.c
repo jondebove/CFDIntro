@@ -3,6 +3,7 @@
  * SPDX-License-Identifier: BSD-2-Clause
  */
 
+#include <assert.h>
 #include <math.h>
 
 #include "utils.h"
@@ -43,11 +44,47 @@ double sol(double x, double y, double tol, int maxit)
 	return ans;
 }
 
+static
+double poisson_iter(struct mat p, double dx2, double dy2, double omega)
+{
+	assert(p.nrow > 0);
+	assert(p.ncol > 0);
+	assert(dx2 > 0);
+	assert(dy2 > 0);
+
+	double den = (dx2 + dy2) * 2.0;
+	dx2 /= den;
+	dy2 /= den;
+
+	int i, j, k;
+	double epsmax = 0.0;
+	/* Red-black sweep */
+	for (k = 0; k <= 1; k++) {
+		for (j = 1; j < p.ncol - 1; j++) {
+			for (i = 2 - (j + k) % 2; i < p.nrow - 1; i += 2) {
+				double eps = omega * (
+						(*mat_at(p,i+1,j) +
+						 *mat_at(p,i-1,j)) * dy2 -
+						(*mat_at(p,i,j)) +
+						(*mat_at(p,i,j+1) +
+						 *mat_at(p,i,j-1)) * dx2);
+				double p1 = *mat_at(p, i, j) + eps;
+
+				eps /= MAX(ABS(p1), ABS(*mat_at(p, i, j)));
+				epsmax = MAX(epsmax, eps);
+
+				*mat_at(p, i, j) = p1;
+			}
+		}
+	}
+	return epsmax;
+}
+
 int main(void)
 {
 	int nx = 20;
 	int ny = 10;
-	int nt = 5000;
+	int nt = 500;
 	double dx = 2.0 / (nx - 1);
 	double dy = 1.0 / (ny - 1);
 
@@ -55,59 +92,47 @@ int main(void)
 	int i = 0;
 	int j = 0;
 
-	struct mat p0, p1;
-	mat_create(&p0, nx, ny);
-	mat_create(&p1, nx, ny);
+	struct mat p;
+	mat_create(&p, nx, ny);
 
 	// BC
 	for (j = 0; j < ny; j++) {
-		*mat_at(p0, 0, j) = 0.0;
-		*mat_at(p0, nx-1, j) = j*dy;
+		*mat_at(p, 0, j) = 0.0;
+		*mat_at(p, nx-1, j) = j*dy;
 	}
-	mat_print(p0, "p", 0);
+	mat_print(p, "p", 0);
 
 	double dx2 = dx * dx;
 	double dy2 = dy * dy;
-	double den = (dx2 + dy2) * 2.0;
+
+	double omega = 1.0;
+	double rho = 1.0 - 1.0 / (nx * ny);
+
 	for (n = 1; n <= nt; n++) {
 		// Equation
-		for (j = 1; j < ny - 1; j++) {
-			for (i = 1; i < nx - 1; i++) {
-				*mat_at(p1, i, j) = (dy2*(*mat_at(p0,i+1,j)+
-							*mat_at(p0,i-1,j)) +
-						dx2*(*mat_at(p0,i,j+1)+
-							*mat_at(p0,i,j-1))) / den;
-			}
-		}
+		double eps = poisson_iter(p, dx2, dy2, omega);
 		// BC
-		for (i = 0; i < nx; i++) {
-			*mat_at(p1, i, 0) = *mat_at(p1, i, 1);
-			*mat_at(p1, i, ny-1) = *mat_at(p1, i, ny-2);
-		}
-		for (j = 0; j < ny; j++) {
-			*mat_at(p1, 0, j) = 0.0;
-			*mat_at(p1, nx-1, j) = j*dy;
+		for (i = 1; i < nx-1; i++) {
+			*mat_at(p, i, 0) = *mat_at(p, i, 1);
+			*mat_at(p, i, ny-1) = *mat_at(p, i, ny-2);
 		}
 
-		if (mat_dist(p0, p1) < 1e-6) {
-			mat_print(p1, "p", n);
-			break;
-		}
-		if (n % 100 == 0) mat_print(p1, "p", n);
-
-		SWAP(struct mat, p0, p1);
+		if (eps < 1e-8) break;
+		if (n % 10 == 0) mat_print(p, "p", n);
+		omega = n == 1 ? 2.0 / (2.0 - rho) : 4.0 / (4.0 - rho*omega);
 	}
+	mat_print(p, "p", n);
+	WARNF("n=%d\n", n);
 
 	// Analytical solution
 	for (j = 0; j < ny; j++) {
 		for (i = 0; i < nx; i++) {
-			*mat_at(p0, i, j) = sol(i*dx, j*dy, 1e-8, 100);
+			*mat_at(p, i, j) = sol(i*dx, j*dy, 1e-8, 100);
 		}
 	}
-	mat_print(p0, "p", -1);
+	mat_print(p, "p", -1);
 
-	mat_destroy(&p0);
-	mat_destroy(&p1);
+	mat_destroy(&p);
 
 	return 0;
 }
