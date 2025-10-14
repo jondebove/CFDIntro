@@ -12,12 +12,12 @@
  * FD in time, BD in space
  * u(n+1,i,j) = u(n,i,j) - u(n,i,j)*dt/dx*(u(n,i,j)-u(n,i-1,j)
  *                       - v(n,i,j)*dt/dy*(u(n,i,j)-u(n,i,j-1))
- *                       + nu*dt/dx*(u(n,i+1,j)-2*u(n,i,j)+u(n,i-1,j))
- *                       + nu*dt/dy*(u(n,i,j+1)-2*u(n,i,j)+u(n,i,j-1))
+ *                       + nu*dt/dx2*(u(n,i+1,j)-2*u(n,i,j)+u(n,i-1,j))
+ *                       + nu*dt/dy2*(u(n,i,j+1)-2*u(n,i,j)+u(n,i,j-1))
  * v(n+1,i,j) = v(n,i,j) - u(n,i,j)*dt/dx*(v(n,i,j)-v(n,i-1,j)
  *                       - v(n,i,j)*dt/dy*(v(n,i,j)-v(n,i,j-1))
- *                       + nu*dt/dx*(v(n,i+1,j)-2*v(n,i,j)+v(n,i-1,j))
- *                       + nu*dt/dy*(v(n,i,j+1)-2*v(n,i,j)+v(n,i,j-1))
+ *                       + nu*dt/dx2*(v(n,i+1,j)-2*v(n,i,j)+v(n,i-1,j))
+ *                       + nu*dt/dy2*(v(n,i,j+1)-2*v(n,i,j)+v(n,i,j-1))
  *
  * IC: u(0,0.5<=x,y<=1) = 2, u(0,elsewhere) = 1
  *
@@ -89,11 +89,11 @@ int main(void)
 					- cdtdy *
 					(*mat_at(u0, i, j) -
 					 *mat_at(u0, i, j-1))
-					+ nu*dt/dx *
+					+ nu*dt/(dx*dx) *
 					(*mat_at(u0, i+1, j) -
 					 *mat_at(u0, i, j)*2 +
 					 *mat_at(u0, i-1, j))
-					+ nu*dt/dy *
+					+ nu*dt/(dy*dy) *
 					(*mat_at(u0, i, j+1) -
 					 *mat_at(u0, i, j)*2 +
 					 *mat_at(u0, i, j-1));
@@ -104,11 +104,11 @@ int main(void)
 					- cdtdy *
 					(*mat_at(v0, i, j) -
 					 *mat_at(v0, i, j-1))
-					+ nu*dt/dx *
+					+ nu*dt/(dx*dx) *
 					(*mat_at(v0, i+1, j) -
 					 *mat_at(v0, i, j)*2 +
 					 *mat_at(v0, i-1, j))
-					+ nu*dt/dy *
+					+ nu*dt/(dy*dy) *
 					(*mat_at(v0, i, j+1) -
 					 *mat_at(v0, i, j)*2 +
 					 *mat_at(v0, i, j-1));
