@@ -9,22 +9,22 @@
  * Navier-Stikes equation: cavity flow
  * dU/dt + (U.grad)U = -grad(p)/rho + nu*lapla(U) with U=(u,v)
  *
- * u(n+1,i,j) = u(n,i,j) - u(n,i,j)*dt/dx*(u(n,i,j)-u(n,i-1,j)
+ * Chorin projection method:
+ * u(n+1/2,i,j) = u(n,i,j) - u(n,i,j)*dt/dx*(u(n,i,j)-u(n,i-1,j))
  *                       - v(n,i,j)*dt/dy*(u(n,i,j)-u(n,i,j-1))
- *                       - dt/rho/dx/2*(p(i+1,j)-p(i-1,j))
  *                       + nu*dt/dx2*(u(n,i+1,j)-2*u(n,i,j)+u(n,i-1,j))
  *                       + nu*dt/dy2*(u(n,i,j+1)-2*u(n,i,j)+u(n,i,j-1))
- * v(n+1,i,j) = v(n,i,j) - u(n,i,j)*dt/dx*(v(n,i,j)-v(n,i-1,j)
+ * v(n+1/2,i,j) = v(n,i,j) - u(n,i,j)*dt/dx*(v(n,i,j)-v(n,i-1,j))
  *                       - v(n,i,j)*dt/dy*(v(n,i,j)-v(n,i,j-1))
- *                       - dt/rho/dy/2*(p(i,j+1)-p(i,j-1))
  *                       + nu*dt/dx2*(v(n,i+1,j)-2*v(n,i,j)+v(n,i-1,j))
  *                       + nu*dt/dy2*(v(n,i,j+1)-2*v(n,i,j)+v(n,i,j-1))
+ *
  * p(i,j) = ((p(i+1,j)+p(i-1,j))* dy2 + (p(i,j+1)+p(i,j-1))* dx2 -
  *           dx2*dy2*b(i,j)) / (2*(dx2+dy2))
- * with b(i,j) = rho*((u(i+1,j)-u(i-1,j))/2dx+(v(i,j+1)-v(i,j-1))/2dy
- *                     -(u(i+1,j)-u(i-1,j))*(u(i+1,j)-u(i-1,j))/4dx2
- *                     -(u(i,j+1)-u(i,j-1))*(v(i+1,j)-v(i-1,j))/2dxdy
- *                     -(v(i,j+1)-v(i,j-1))*(v(i,j+1)-v(i,j-1))/4dy2
+ * with b(i,j) = rho*((u(i+1,j)-u(i-1,j))/2dx+(v(i,j+1)-v(i,j-1))/2dy)
+ *
+ * u(n+1,i,j) = u(n+1/2,i,j) - dt/(2 rho dx)*(p(i+1,j)-p(i-1,j))
+ * v(n+1,i,j) = v(n+1/2,i,j) - dt/(2 rho dy)*(p(i,j+1)-p(i,j-1))
  *
  * IC: u=v=p=0
  *
@@ -85,6 +85,10 @@ int main(void)
 	double nu = 0.1;
 	double rho = 1.0;
 
+	double nudtdx2 = nu * dt / (dx * dx);
+	double nudtdy2 = nu * dt / (dy * dy);
+	WARNF("betax=%f betay=%f\n", nudtdx2, nudtdy2);
+
 	int i, j, m, n;
 
 	struct mat u0, u1, v0, v1, p, b;
@@ -105,14 +109,55 @@ int main(void)
 	mat_print(p, "p", 0);
 
 	for (n = 1; n <= nt; n++) {
+		// Equation
+		for (j = 1; j < ny - 1; j++) {
+			for (i = 1; i < nx - 1; i++) {
+				double cdtdx = *mat_at(u0, i, j) * dt / dx;
+				double cdtdy = *mat_at(v0, i, j) * dt / dy;
+				if (cdtdx > 1.0 || cdtdy > 1.0) {
+					WARNF("CFLx=%f CFLy=%f\n", cdtdx, cdtdy);
+				}
+
+				*mat_at(u1, i, j) = *mat_at(u0, i, j)
+					- cdtdx *
+					(*mat_at(u0, i, j) -
+					 *mat_at(u0, i-1, j))
+					- cdtdy *
+					(*mat_at(u0, i, j) -
+					 *mat_at(u0, i, j-1))
+					+ nudtdx2 *
+					(*mat_at(u0, i+1, j) -
+					 *mat_at(u0, i, j)*2 +
+					 *mat_at(u0, i-1, j))
+					+ nudtdy2 *
+					(*mat_at(u0, i, j+1) -
+					 *mat_at(u0, i, j)*2 +
+					 *mat_at(u0, i, j-1));
+				*mat_at(v1, i, j) = *mat_at(v0, i, j)
+					- cdtdx *
+					(*mat_at(v0, i, j) -
+					 *mat_at(v0, i-1, j))
+					- cdtdy *
+					(*mat_at(v0, i, j) -
+					 *mat_at(v0, i, j-1))
+					+ nudtdx2 *
+					(*mat_at(v0, i+1, j) -
+					 *mat_at(v0, i, j)*2 +
+					 *mat_at(v0, i-1, j))
+					+ nudtdy2 *
+					(*mat_at(v0, i, j+1) -
+					 *mat_at(v0, i, j)*2 +
+					 *mat_at(v0, i, j-1));
+			}
+		}
 		// Pressure
-		for (j = 1; j < ny-1; j++) {
-			for (i = 1; i < nx-1; i++) {
-				double ux = (*mat_at(u0, i+1, j) - *mat_at(u0, i-1, j)) / (dx * 2.0);
-				double uy = (*mat_at(u0, i, j+1) - *mat_at(u0, i, j-1)) / (dy * 2.0);
-				double vx = (*mat_at(v0, i+1, j) - *mat_at(v0, i-1, j)) / (dx * 2.0);
-				double vy = (*mat_at(v0, i, j+1) - *mat_at(v0, i, j-1)) / (dy * 2.0);
-				*mat_at(b, i, j) = rho*((ux + vy)/dt - (ux*ux + uy*vx*2.0 + vy*vy));
+		for (j = 1; j < ny - 1; j++) {
+			for (i = 1; i < nx - 1; i++) {
+				*mat_at(b, i, j) = rho / (dt * 2.0) * (
+						(*mat_at(u1, i+1, j) -
+						 *mat_at(u1, i-1, j)) / dx +
+						(*mat_at(v1, i, j+1) -
+						 *mat_at(v1, i, j-1)) / dy);
 			}
 		}
 		double omega = 1.0;
@@ -135,51 +180,17 @@ int main(void)
 		}
 		WARNF("m=%d eps=%e\n", m, eps);
 
-		// Equation
+		// Projection
 		for (j = 1; j < ny - 1; j++) {
 			for (i = 1; i < nx - 1; i++) {
-				double cdtdx = *mat_at(u0, i, j) * dt / dx;
-				double cdtdy = *mat_at(v0, i, j) * dt / dy;
-				if (cdtdx > 1.0 || cdtdy > 1.0) {
-					WARNF("CFLx=%f CFLy=%f\n", cdtdx, cdtdy);
-				}
-
-				*mat_at(u1, i, j) = *mat_at(u0, i, j)
-					- cdtdx *
-					(*mat_at(u0, i, j) -
-					 *mat_at(u0, i-1, j))
-					- cdtdy *
-					(*mat_at(u0, i, j) -
-					 *mat_at(u0, i, j-1))
-					- dt/(dx*rho*2) *
+				*mat_at(u1, i, j) = *mat_at(u1, i, j) -
+					dt/(dx*rho*2) *
 					(*mat_at(p, i+1, j) -
-					 *mat_at(p, i-1, j))
-					+ nu*dt/(dx*dx) *
-					(*mat_at(u0, i+1, j) -
-					 *mat_at(u0, i, j)*2 +
-					 *mat_at(u0, i-1, j))
-					+ nu*dt/(dy*dy) *
-					(*mat_at(u0, i, j+1) -
-					 *mat_at(u0, i, j)*2 +
-					 *mat_at(u0, i, j-1));
-				*mat_at(v1, i, j) = *mat_at(v0, i, j)
-					- cdtdx *
-					(*mat_at(v0, i, j) -
-					 *mat_at(v0, i-1, j))
-					- cdtdy *
-					(*mat_at(v0, i, j) -
-					 *mat_at(v0, i, j-1))
-					- dt/(dy*rho*2) *
+					 *mat_at(p, i-1, j));
+				*mat_at(v1, i, j) = *mat_at(v1, i, j) -
+					dt/(dy*rho*2) *
 					(*mat_at(p, i, j+1) -
-					 *mat_at(p, i, j-1))
-					+ nu*dt/(dx*dx) *
-					(*mat_at(v0, i+1, j) -
-					 *mat_at(v0, i, j)*2 +
-					 *mat_at(v0, i-1, j))
-					+ nu*dt/(dy*dy) *
-					(*mat_at(v0, i, j+1) -
-					 *mat_at(v0, i, j)*2 +
-					 *mat_at(v0, i, j-1));
+					 *mat_at(p, i, j-1));
 			}
 		}
 		mat_print(u1, "u", n);
@@ -194,6 +205,8 @@ int main(void)
 	mat_destroy(&u1);
 	mat_destroy(&v0);
 	mat_destroy(&v1);
+	mat_destroy(&p);
+	mat_destroy(&b);
 
 	return 0;
 }

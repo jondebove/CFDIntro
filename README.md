@@ -12,3 +12,8 @@ To compile it, just type
 To run step `i`, just run
 
     ./i
+
+## Changes
+
+SOR instead of Jacobi for Laplace and Poisson equations.
+Chorin projection method instead of direct method.
