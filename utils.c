@@ -30,7 +30,7 @@ void mat_destroy(struct mat *m)
 	}
 }
 
-void mat_print(struct mat m, char *s, int n)
+void mat_print(struct mat m, char const *s, int n)
 {
 	int i, j;
 	static int header = 1;

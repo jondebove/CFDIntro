@@ -44,7 +44,7 @@ double *mat_at(struct mat const m, int i, int j)
 	return &m.data[i + m.nrow * j];
 }
 
-void mat_print(struct mat m, char *s, int n);
+void mat_print(struct mat m, char const *s, int n);
 
 double mat_dist(struct mat a, struct mat b);
 
