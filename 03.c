@@ -28,6 +28,7 @@ int main(void)
 	double dt = 0.01;
 
 	double nudtdx2 = nu * dt / (dx * dx);
+	WARNF("beta=%f\n", nudtdx2);
 
 	int n = 0;
 	int i = 0;

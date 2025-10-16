@@ -34,6 +34,10 @@ int main(void)
 	double dt = 0.01;
 	double nu = 0.1;
 
+	double nudtdx2 = nu * dt / (dx * dx);
+	double nudtdy2 = nu * dt / (dy * dy);
+	WARNF("betax=%f betay=%f\n", nudtdx2, nudtdy2);
+
 	int n = 0;
 	int i = 0;
 	int j = 0;
@@ -89,11 +93,11 @@ int main(void)
 					- cdtdy *
 					(*mat_at(u0, i, j) -
 					 *mat_at(u0, i, j-1))
-					+ nu*dt/(dx*dx) *
+					+ nudtdx2 *
 					(*mat_at(u0, i+1, j) -
 					 *mat_at(u0, i, j)*2 +
 					 *mat_at(u0, i-1, j))
-					+ nu*dt/(dy*dy) *
+					+ nudtdy2 *
 					(*mat_at(u0, i, j+1) -
 					 *mat_at(u0, i, j)*2 +
 					 *mat_at(u0, i, j-1));
@@ -104,11 +108,11 @@ int main(void)
 					- cdtdy *
 					(*mat_at(v0, i, j) -
 					 *mat_at(v0, i, j-1))
-					+ nu*dt/(dx*dx) *
+					+ nudtdx2 *
 					(*mat_at(v0, i+1, j) -
 					 *mat_at(v0, i, j)*2 +
 					 *mat_at(v0, i-1, j))
-					+ nu*dt/(dy*dy) *
+					+ nudtdy2 *
 					(*mat_at(v0, i, j+1) -
 					 *mat_at(v0, i, j)*2 +
 					 *mat_at(v0, i, j-1));
